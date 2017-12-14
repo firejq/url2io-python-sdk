@@ -37,7 +37,7 @@ import urllib
 import urllib.request
 # import urllib2
 import time
-from urllib.parse import urlparse
+# from urllib.parse import urlparse
 from collections import Iterable
 
 
@@ -133,8 +133,9 @@ class _APIProxy(object):
             raise TypeError('post argument can only be True or False')
 
         url = self.geturl(**kwargs)
+        # print(url)
 
-        request = urllib.request.urlopen(url, timeout=self._api.timeout)
+        request = urllib.request.Request(url)
 
         self._api.update_request(request)
 
@@ -142,16 +143,20 @@ class _APIProxy(object):
         while True:
             retry -= 1
             try:
-                ret = request.read()
+                # ret = request.read()
+                ret = urllib.request.urlopen(url=request,
+                                             timeout=self._api.timeout)
                 break
-            except urllib.error.HTTPError as e:
-                raise APIError(e.code, url, e.read())
+            # except urllib.error.HTTPError as e:
+            #     raise APIError(e.code, url, e.read())
             except (socket.error, urllib.error.HTTPError) as e:
                 if retry < 0:
-                    raise e
+                    # raise e
+                    return json.loads(e.read())
                 _print_debug('caught error: {}; retrying'.format(e))
                 time.sleep(self._api.retry_delay)
 
+        ret = ret.read()
         if self._api.decode_result:
             try:
                 ret = json.loads(ret)
