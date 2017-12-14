@@ -1,4 +1,4 @@
-#coding: utf-8
+# coding: utf-8
 #
 # This program is free software. It comes without any warranty, to
 # the extent permitted by applicable law. You can redistribute it
@@ -28,16 +28,18 @@ api.article(url='http://www.url2io.com/products', fields=['next', 'text'])
 
 __all__ = ['APIError', 'API']
 
-
 DEBUG_LEVEL = 1
 
 import sys
 import socket
 import json
 import urllib
-import urllib2
+import urllib.request
+# import urllib2
 import time
+from urllib.parse import urlparse
 from collections import Iterable
+
 
 class APIError(Exception):
     code = None
@@ -55,7 +57,7 @@ class APIError(Exception):
         self.body = body
 
     def __str__(self):
-        return 'code={s.code}\nurl={s.url}\n{s.body}'.format(s = self)
+        return 'code={s.code}\nurl={s.url}\n{s.body}'.format(s=self)
 
     __repr__ = __str__
 
@@ -69,9 +71,9 @@ class API(object):
     max_retries = None
     retry_delay = None
 
-    def __init__(self, token, srv = None,
-                 decode_result = True, timeout = 30, max_retries = 5,
-                 retry_delay = 3):
+    def __init__(self, token, srv=None,
+                 decode_result=True, timeout=30, max_retries=5,
+                 retry_delay=3):
         """:param srv: The API server address
         :param decode_result: whether to json_decode the result
         :param timeout: HTTP request timeout in seconds
@@ -120,19 +122,19 @@ class _APIProxy(object):
     def __init__(self, apiobj, path):
         _setup_apiobj(self, apiobj, path)
 
-    def __call__(self, post = False, *args, **kwargs):
+    def __call__(self, post=False, *args, **kwargs):
         # /article
         # url = 'http://xxxx.xxx',
         # fields = ['next',],
         #
         if len(args):
             raise TypeError('only keyword arguments are allowed')
-        if type(post) is not bool:
+        if not isinstance(post, bool):
             raise TypeError('post argument can only be True or False')
 
         url = self.geturl(**kwargs)
 
-        request = urllib2.Request(url)
+        request = urllib.request.urlopen(url, timeout=self._api.timeout)
 
         self._api.update_request(request)
 
@@ -140,11 +142,11 @@ class _APIProxy(object):
         while True:
             retry -= 1
             try:
-                ret = urllib2.urlopen(request, timeout = self._api.timeout).read()
+                ret = request.read()
                 break
-            except urllib2.HTTPError as e:
+            except urllib.error.HTTPError as e:
                 raise APIError(e.code, url, e.read())
-            except (socket.error, urllib2.URLError) as e:
+            except (socket.error, urllib.error.HTTPError) as e:
                 if retry < 0:
                     raise e
                 _print_debug('caught error: {}; retrying'.format(e))
@@ -153,24 +155,27 @@ class _APIProxy(object):
         if self._api.decode_result:
             try:
                 ret = json.loads(ret)
-            except:
-                raise APIError(-1, url, 'json decode error, value={0!r}'.format(ret))
+            except BaseException:
+                raise APIError(-1,
+                               url,
+                               'json decode error, value={0!r}'.format(ret))
         return ret
 
     def _mkarg(self, kargs):
         """change the argument list (encode value, add api key/secret)
         :return: the new argument list"""
+
         def enc(x):
-            #if isinstance(x, unicode):
+            # if isinstance(x, unicode):
             #    return x.encode('utf-8')
-            #return str(x)
-            return x.encode('utf-8') if isinstance(x, unicode) else str(x)
+            # return str(x)
+            return x.encode('utf-8') if isinstance(x, str) else str(x)
 
         kargs = kargs.copy()
         kargs['token'] = self._api.token
         for (k, v) in kargs.items():
-            if isinstance(v, Iterable) and not isinstance(v, basestring):
-                kargs[k] = ','.join([enc(i) for i in v])
+            if isinstance(v, Iterable) and not isinstance(v, str):
+                kargs[k] = ','.join('%s' % id for id in [enc(i) for i in v])
             else:
                 kargs[k] = enc(v)
 
@@ -178,16 +183,17 @@ class _APIProxy(object):
 
     def geturl(self, **kargs):
         """return the request url"""
-        return self._urlbase + '?' + urllib.urlencode(self._mkarg(kargs))
+        return self._urlbase + '?' + urllib.parse.urlencode(self._mkarg(kargs))
 
 
 def _print_debug(msg):
     if DEBUG_LEVEL:
         sys.stderr.write(str(msg) + '\n')
 
+
 _APIS = [
     '/article',
-    #'/images',
+    # '/images',
 ]
 
 _APIS = [i.split('/')[1:] for i in _APIS]

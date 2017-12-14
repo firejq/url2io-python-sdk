@@ -1,6 +1,6 @@
 # URL2io Python SDK
 
-This is the URL2io python SDK suite. Note that python3 is required.
+This is the URL2io python SDK suite.
 
 [API Docs](http://www.url2io.com/docs)
 
@@ -13,9 +13,25 @@ How to use? example:
 1. [register](http://www.url2io.com/accounts/register) and get **`token`**
 2. coding
 
+python2.7 version
 ```python
 >>> import url2io
 >>> api = url2io.API(token)
+>>> # get content and next page link
+>>> ret = api.article(url='http://www.url2io.com/products', fields=['next',])
+>>> print(ret)
+{
+    u'content': u'<div><p>\u63d0\u4f9b\u7b80\u5355\uff0c',
+    u'date': None,
+    u'title': u'URL2io \u4ecb\u7ecd',
+    u'url': u'http://www.url2io.com/products'
+}
+```
+
+python3 version
+```python
+>>> import url2io3
+>>> api = url2io3.API(token)
 >>> # get content and next page link
 >>> ret = api.article(url='http://www.url2io.com/products', fields=['next',])
 >>> print(ret)

@@ -1,18 +1,15 @@
-import sys
-sys.path.append('..')
+import sys; sys.path.append('..')
 import url2io
 
-# your user token
-token = 'xxx'
-api = url2io.API(token)
+api = url2io.API('demo')
 
-print("get article")
+print "get article"
 ret = api.article(url='http://www.url2io.com/docs')
-print(ret.keys())
+print ret.keys()
 
-print("get article & next")
+print "get article & next"
 ret = {'next': 'http://tech.sina.com.cn/i/2010-08-18/19554560539.shtml'}
-print('get: ', ret.get('next'))
+print 'get: ', ret.get('next')
 while ret.get('next'):
-    ret = api.article(url=ret.get('next'), fields=['next', 'text'])
-    print('next: ', ret.get('next'))
+    ret = api.article(url=ret.get('next'), fields=['next','text'])
+    print 'next: ', ret.get('next')
