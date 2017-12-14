@@ -1,6 +1,6 @@
 # URL2io Python SDK
 
-This is the URL2io python SDK suite. Note that python2.7 is required.
+This is the URL2io python SDK suite. Note that python3 is required.
 
 [API Docs](http://www.url2io.com/docs)
 
@@ -18,7 +18,7 @@ How to use? example:
 >>> api = url2io.API(token)
 >>> # get content and next page link
 >>> ret = api.article(url='http://www.url2io.com/products', fields=['next',])
->>> print ret
+>>> print(ret)
 {
     u'content': u'<div><p>\u63d0\u4f9b\u7b80\u5355\uff0c',
     u'date': None,
